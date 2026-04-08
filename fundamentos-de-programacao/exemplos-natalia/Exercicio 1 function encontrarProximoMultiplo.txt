@@ -1,0 +1,183 @@
+/Exercicio 1
+function encontrarProximoMultiplo(a: number, b: number): number {
+  const resto = b % a;        //O quanto falta pra b chegar no proximo multiplo de a
+
+  let resultado: number;
+
+  if (resto === 0) {
+    resultado = b + a;
+  } else {
+    resultado = b + (a - resto);
+  }
+
+  return resultado;
+}
+
+console.log("O proximo multiplo é: " + encontrarProximoMultiplo(5, 12)); 
+console.log("O proximo multiplo é: " + encontrarProximoMultiplo(4, 8));  
+console.log("O proximo multiplo é: " + encontrarProximoMultiplo(7, 20)); 
+
+//Exercicio 2
+const dayNow: number = 16;        //Data do dia em que fizemos esse exercicio
+const monthNow: number = 3;
+const yearNow: number = 2026;
+
+function estaVencido(day: number, month: number, year: number): boolean {
+  if (year < yearNow) return true;
+  if (year > yearNow) return false;
+
+  if (month < monthNow) return true;
+  if (month > monthNow) return false;
+
+  if (day < dayNow) return true;
+
+  return false;
+}
+
+if (estaVencido(2, 7, 2027)) console.log("Produto não venceu");
+else console.log("Produto venceu");
+
+if (estaVencido(15, 2, 2026)) console.log("Produto não venceu");
+else console.log("Produto venceu");
+
+if (estaVencido(16, 3, 2026)) console.log("Produto não venceu");
+else console.log("Produto venceu");
+
+console.log("\n");
+
+//Exercicio 3
+function isPrimo(num: number): boolean {
+  if (num < 2) return false;
+  for (let i = 2; i <= Math.sqrt(num); i++) {
+    if (num % i === 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
+if (isPrimo(17)) console.log("17 é primo");
+if (!isPrimo(4)) console.log("4 não é primo");
+
+
+
+
+PRIMEIROS PRIMOS
+
+const qtdePrimos = 2
+const listaDePrimos = encontraPrimos(qtdePrimos)
+
+function ehPrimo (num: number): boolean {
+if (num %i == 0) {
+return false;
+}
+}
+return true
+}
+
+function encontrarPrimos(qtd: number): number [] {
+const saoPrimos: number [] = [];
+let primeirosPrimos = 2;
+
+while (saoPrimos.length < qtd) {
+if (ehPrimo (primeirosPrimos)) {
+saoPrimos.push (ŕimeirosPrimos);
+}
+primeirosPrimos++;
+}
+return saoPrimos;
+}
+
+
+PEDRA PAPEL TESSOURA RESPOSTA DA IA
+
+class RockPaperScissors {
+
+  play(player1: string, player2: string): string {
+
+    if (player1 === player2) {
+      return "Draw!";
+    }
+
+    if (
+      (player1 === "rock" && player2 === "scissors") ||
+      (player1 === "scissors" && player2 === "paper") ||
+      (player1 === "paper" && player2 === "rock")
+    ) {
+      return "Player 1 won!";
+    }
+
+    return "Player 2 won!";
+  }
+}
+
+// Teste
+const game = new RockPaperScissors();
+
+console.log(game.play("scissors", "paper")); // Player 1 won!
+console.log(game.play("scissors", "rock"));  // Player 2 won!
+console.log(game.play("paper", "paper"));    // Draw!
+
+
+
+
+
+DESAFIO EXTRA RESPOSTA DA IA
+
+class Clock {
+  private digitos: number[];
+
+  constructor(digitos: number[]) {
+    this.digitos = digitos;
+  }
+
+  closestToMidnight(): string {
+    let melhorTempo = -1;
+    let melhorDiferenca = Infinity;
+
+    const permutacoes = this.permutar(this.digitos);
+
+    for (const p of permutacoes) {
+      const hora = p[0] * 10 + p[1];
+      const minuto = p[2] * 10 + p[3];
+
+      if (hora < 24 && minuto < 60) {
+        const totalMinutos = hora * 60 + minuto;
+        const diferenca = 1439 - totalMinutos;
+
+        if (diferenca >= 0 && diferenca < melhorDiferenca) {
+          melhorDiferenca = diferenca;
+          melhorTempo = totalMinutos;
+        }
+      }
+    }
+
+    const h = Math.floor(melhorTempo / 60);
+    const m = melhorTempo % 60;
+
+    return `${this.formatar(h)}:${this.formatar(m)}`;
+  }
+
+  private formatar(num: number): string {
+    return num < 10 ? `0${num}` : `${num}`;
+  }
+
+  private permutar(arr: number[]): number[][] {
+    if (arr.length === 1) return [arr];
+
+    let resultado: number[][] = [];
+
+    for (let i = 0; i < arr.length; i++) {
+      const resto = arr.slice(0, i).concat(arr.slice(i + 1));
+      const perms = this.permutar(resto);
+
+      for (const p of perms) {
+        resultado.push([arr[i], ...p]);
+      }
+    }
+
+    return resultado;
+  }
+}
+
+

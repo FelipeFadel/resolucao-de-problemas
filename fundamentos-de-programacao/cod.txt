@@ -1,0 +1,9 @@
+CONJUNTO MUTUAMENTE PRIMOS
+
+cooprimos 
+conjuntoInteiro é a entrada
+Um unico divisor comum a todos é o numero 1
+
+30 42 70 105
+20 21 
+30 42

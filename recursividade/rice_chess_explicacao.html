@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Problema do Arroz no Tabuleiro de Xadrez</title>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f4f6f8;
+        padding: 40px;
+        line-height: 1.6;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: auto;
+        background: white;
+        padding: 35px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.08);
+      }
+
+      h1 {
+        margin-bottom: 10px;
+      }
+
+      h2 {
+        margin-top: 30px;
+        color: #333;
+      }
+
+      pre {
+        background: #f0f0f0;
+        padding: 12px;
+        border-radius: 6px;
+        overflow-x: auto;
+      }
+
+      hr {
+        margin: 30px 0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>Problema do Arroz no Tabuleiro de Xadrez (Recursão + Bit Shift)</h1>
+
+      <h2>Ideia do problema</h2>
+
+      <p>No tabuleiro de xadrez:</p>
+
+      <ul>
+        <li>Casa 1 → 1 grão</li>
+        <li>Casa 2 → 2 grãos</li>
+        <li>Casa 3 → 4 grãos</li>
+        <li>Casa 4 → 8 grãos</li>
+      </ul>
+
+      <p>Cada casa tem <b>o dobro da anterior</b>.</p>
+
+      <p>
+        Precisamos descobrir <b>quantas casas são necessárias</b> para atingir
+        pelo menos um certo número de grãos.
+      </p>
+
+      <p><b>Exemplo:</b></p>
+
+      <ul>
+        <li>0 grãos → 0 casas</li>
+        <li>1 grão → 1 casa</li>
+        <li>2 grãos → 2 casas</li>
+        <li>3 grãos → 2 casas</li>
+        <li>4 grãos → 3 casas</li>
+      </ul>
+
+      <hr />
+
+      <h2>Implementação em TypeScript</h2>
+
+      <pre>
+class RiceChess {
+  public squaresNeeded(grains: number): number {
+    if (grains === 0) return 0;
+    return this.calculate(grains, 0, 0);
+  }
+
+  private calculate(grains: number, square: number, total: number): number {
+    if (total >= grains) {
+      return square;
+    }
+
+    const grainsInSquare = 1 &lt;&lt; square;
+
+    return this.calculate(
+      grains,
+      square + 1,
+      total + grainsInSquare
+    );
+  }
+}
+</pre
+      >
+
+      <hr />
+
+      <h2>Como testar</h2>
+
+      <pre>
+const rice = new RiceChess();
+
+console.log(rice.squaresNeeded(0)); // 0
+console.log(rice.squaresNeeded(1)); // 1
+console.log(rice.squaresNeeded(2)); // 2
+console.log(rice.squaresNeeded(3)); // 2
+console.log(rice.squaresNeeded(4)); // 3
+</pre
+      >
+
+      <hr />
+
+      <h2>O que é Bit Shift (&lt;&lt;)</h2>
+
+      <p>
+        O operador <b>bit shift à esquerda</b> desloca os bits de um número para
+        a esquerda.
+      </p>
+
+      <p><b>Exemplo com o número 1 em binário:</b></p>
+
+      <pre>
+1      = 0001
+1 << 1 = 0010 → 2
+1 << 2 = 0100 → 4
+1 << 3 = 1000 → 8
+</pre
+      >
+
+      <p>Cada deslocamento <b>multiplica o número por 2</b>.</p>
+
+      <p>Ou seja:</p>
+
+      <pre>
+1 << n = 2^n
+</pre
+      >
+
+      <p>
+        Isso combina perfeitamente com o problema do arroz, porque cada casa do
+        tabuleiro dobra a quantidade de grãos.
+      </p>
+
+      <hr />
+
+      <h2>Explicação do Código</h2>
+
+      <h3>Classe</h3>
+
+      <p>
+        Criamos uma classe chamada <b>RiceChess</b>. Isso permite reutilizar e
+        testar facilmente o código.
+      </p>
+
+      <hr />
+
+      <h3>Método público</h3>
+
+      <p><b>squaresNeeded(grains)</b></p>
+
+      <p>Esse método recebe a quantidade de grãos desejada.</p>
+
+      <ul>
+        <li>Se o número de grãos for 0, retornamos 0 casas.</li>
+        <li>Caso contrário chamamos a função recursiva.</li>
+      </ul>
+
+      <hr />
+
+      <h3>Função Recursiva</h3>
+
+      <p><b>calculate(grains, square, total)</b></p>
+
+      <p>Parâmetros:</p>
+
+      <ul>
+        <li><b>grains</b> → quantidade desejada de grãos</li>
+        <li><b>square</b> → casa atual do tabuleiro</li>
+        <li><b>total</b> → total acumulado de grãos</li>
+      </ul>
+
+      <hr />
+
+      <h3>Condição de parada</h3>
+
+      <pre>
+if (total >= grains)
+</pre
+      >
+
+      <p>
+        Quando o total acumulado já é suficiente, retornamos o número da casa
+        atual.
+      </p>
+
+      <hr />
+
+      <h3>Calculando os grãos da casa</h3>
+
+      <pre>
+const grainsInSquare = 1 << square
+</pre
+      >
+
+      <p>Isso gera a sequência:</p>
+
+      <pre>
+square 0 → 1
+square 1 → 2
+square 2 → 4
+square 3 → 8
+</pre
+      >
+
+      <hr />
+
+      <h3>Chamada recursiva</h3>
+
+      <p>Chamamos novamente a função aumentando a casa e somando os grãos.</p>
+
+      <pre>
+calculate(
+  grains,
+  square + 1,
+  total + grainsInSquare
+)
+</pre
+      >
+
+      <hr />
+
+      <h2>Exemplo de execução (grains = 3)</h2>
+
+      <h3>Primeira chamada</h3>
+
+      <pre>
+square = 0
+total = 0
+
+grãos da casa:
+
+1 << 0 = 1
+
+novo total = 1
+</pre
+      >
+
+      <hr />
+
+      <h3>Segunda chamada</h3>
+
+      <pre>
+square = 1
+total = 1
+
+grãos da casa:
+
+1 << 1 = 2
+
+novo total = 3
+</pre
+      >
+
+      <hr />
+
+      <h3>Terceira chamada</h3>
+
+      <pre>
+total >= grains
+3 >= 3
+
+Retornamos:
+
+square = 2
+</pre
+      >
+
+      <p><b>Resultado final: 2 casas</b></p>
+    </div>
+  </body>
+</html>

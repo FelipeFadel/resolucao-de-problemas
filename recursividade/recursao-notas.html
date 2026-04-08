@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Dicas de Recursão em TypeScript</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f5f5f5;
+        padding: 40px;
+        line-height: 1.6;
+      }
+      .container {
+        max-width: 800px;
+        margin: auto;
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #333;
+      }
+      h2 {
+        margin-top: 25px;
+        color: #444;
+      }
+      pre {
+        background: #eee;
+        padding: 10px;
+        border-radius: 5px;
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>Dicas para Programar em TypeScript (Recursão)</h1>
+
+      <h2>1. Sempre defina o caso base</h2>
+      <p>
+        Toda função recursiva precisa de um caso de parada. Sem isso o código
+        entra em loop infinito.
+      </p>
+
+      <pre>
+if (n === 0) {
+  return 0;
+}
+</pre
+      >
+
+      <p>Pergunte sempre: <b>“Quando minha recursão deve parar?”</b></p>
+
+      <h2>2. Garanta progresso na recursão</h2>
+      <p>A cada chamada recursiva o problema precisa ficar menor.</p>
+
+      <pre>
+return soma(n - 1);
+</pre
+      >
+
+      <p>Se o valor não diminuir ou mudar, a recursão nunca termina.</p>
+
+      <h2>3. Pense no problema menor</h2>
+      <p>
+        Recursão funciona quando você resolve um problema usando uma versão
+        menor dele.
+      </p>
+
+      <pre>
+n! = n * (n-1)!
+</pre
+      >
+
+      <h2>4. Teste primeiro casos pequenos</h2>
+
+      <pre>
+0
+1
+2
+3
+</pre
+      >
+
+      <p>Isso ajuda a encontrar erros no caso base.</p>
+
+      <h2>5. Use nomes claros</h2>
+
+      <p>Evite:</p>
+
+      <pre>
+x
+y
+z
+</pre
+      >
+
+      <p>Prefira:</p>
+
+      <pre>
+current
+index
+total
+remaining
+</pre
+      >
+
+      <h2>6. Cuidado com Stack Overflow</h2>
+      <p>Recursões muito profundas podem quebrar o programa.</p>
+
+      <ul>
+        <li>O problema realmente diminui?</li>
+        <li>Existe caso base?</li>
+      </ul>
+
+      <h2>7. Use parâmetros auxiliares</h2>
+
+      <pre>
+function soma(n: number, total: number = 0)
+</pre
+      >
+
+      <p>Isso ajuda a guardar o estado da execução.</p>
+
+      <h2>8. Simule no papel</h2>
+
+      <pre>
+funcao(3)
+funcao(2)
+funcao(1)
+funcao(0)
+</pre
+      >
+
+      <p>Isso ajuda a entender o fluxo da recursão.</p>
+
+      <h2>9. Evite loops se a questão pedir recursão</h2>
+
+      <pre>
+for
+while
+</pre
+      >
+
+      <p>Use chamadas da própria função.</p>
+
+      <h2>10. Verifique os tipos no TypeScript</h2>
+
+      <pre>
+function factorial(n: number): number
+</pre
+      >
+
+      <p>Isso evita erros e ajuda o compilador.</p>
+
+      <h2>Regra de Ouro da Recursão</h2>
+
+      <ol>
+        <li>Caso base</li>
+        <li>Problema menor</li>
+        <li>Chamada recursiva correta</li>
+      </ol>
+
+      <p>Se essas três coisas estiverem corretas, a recursão vai funcionar.</p>
+    </div>
+  </body>
+</html>
