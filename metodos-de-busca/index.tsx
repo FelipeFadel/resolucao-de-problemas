@@ -9,3 +9,7 @@ const board: number[][] = [
   [1, 6, 8, 4, 7, 9, 3, 5, 2],
   [3, 5, 4, 8, 6, 2, 1, 9, 7],
 ];
+
+// const rows: Set<number>[] = Array.from({length:9}, () => new Set());
+// const cols: Set<number>[] = Array.from({length:9}, () => new Set());
+// const boxes: Set<number>[] = Array.from({length:9}, () => new Set());
