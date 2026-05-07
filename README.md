@@ -325,3 +325,82 @@ Não considere a tarefa pronta antes de rodar os testes.
 - **Nomenclatura:** Mantenha os nomes de classes e arquivos em Inglês e seguindo o padrão CamelCase.
 - **Humanização:** Adicione comentários explicando o "porquê" de certas lógicas complexas nos seus Controllers.
 - **Logs:** Se algo não funcionar, verifique os logs em `log/nginx/error.log` dentro do projeto.
+
+---
+
+## Explicações do Frontend (Angular)
+
+O frontend do MyMovies é construído com **Angular**, operando como uma **Single Page Application (SPA)**. Isso significa que a página não recarrega completamente ao navegar; apenas os componentes necessários são atualizados.
+
+### 1. Comunicação com o Backend
+O Angular utiliza o `HttpClient` para fazer requisições assíncronas ao servidor PHP.
+- **Proxy de Desenvolvimento:** Para evitar problemas de CORS, o arquivo `proxy.conf.json` mapeia chamadas de `/api` para `http://localhost:3000`. No código Angular, você chama `/api/login` e o proxy encaminha para o backend correto (onde o PHP está rodando).
+
+### 2. Gerenciamento de Mensagens (Flash Messages)
+As mensagens de sucesso ou erro vindas do backend são capturadas automaticamente:
+- **Interceptor (`flashInterceptor`):** Intercepta todas as respostas HTTP. Se encontrar um objeto `flash` no JSON retornado pelo PHP, ele o extrai e envia para o `FlashService`.
+- **FlashService:** Utiliza **Angular Signals** para armazenar as mensagens. O componente principal da aplicação "escuta" esse serviço e exibe os alertas (Toasts/Alertas) no topo da tela.
+
+### 3. Estrutura de Pastas
+- `src/app/pages/`: Componentes que representam páginas inteiras (Login, Cadastro, Listagem).
+- `src/app/components/`: Elementos reutilizáveis (Header, Movie Cards, Formulários).
+- `src/app/core/services/`: Lógica de comunicação com a API (ex: `AuthService` para login, `MovieService` para filmes).
+- `src/app/core/guards/`: Proteção de rotas no frontend (ex: impedir que um usuário deslogado acesse a página de perfil).
+
+---
+
+## O que é válido mudar no Backend e Como Fazer
+
+O seu backend segue o padrão **MVC (Model-View-Controller)** com uma camada de **ActiveRecord** para facilitar o uso do banco de dados.
+
+### 1. Criar ou Alterar Modelos (Banco de Dados)
+Sempre que precisar de uma nova tabela ou campo no banco:
+- **Passo A:** Adicione a coluna no arquivo `database/schema.sql`.
+- **Passo B:** Atualize o Model correspondente em `app/Models/`. Todo Model deve herdar de `Core\Database\ActiveRecord\Model`.
+- **Passo C:** Liste o nome da nova coluna no array `protected static array $columns`. Se não listar aqui, o PHP não conseguirá salvar o dado.
+- **Passo D:** Rode `./run db:reset` e `./run db:populate` para aplicar as mudanças.
+
+### 2. Criar Novos Endpoints (Rotas e Controllers)
+Para adicionar uma funcionalidade nova (ex: "Favoritar um Filme"):
+- **Rota:** Em `config/routes.php`, adicione a linha: `Route::post('/movies/favorite', [MovieController::class, 'favorite']);`.
+- **Controller:** Em `app/Controllers/MovieController.php`, crie o método `favorite`. Use `$this->json([...])` para enviar a resposta de volta ao Angular.
+
+### 3. Implementar Regras de Acesso (Middleware)
+Se uma rota for restrita (ex: apenas Admin pode deletar filmes):
+- **Middleware:** Crie a lógica em `app/Middleware/AdminAuthenticate.php`.
+- **Registro:** Verifique se o middleware tem um apelido em `config/App.php`.
+- **Uso:** Na rota, use `Route::middleware('admin')->group(...)`.
+
+---
+
+## Exemplo: Como criar uma Flash Message em uma parte específica
+
+Se você quer exibir um aviso de "Sucesso" ou "Erro" no Angular após uma ação no PHP:
+
+1.  **No seu Controller PHP:**
+    Chame a classe `Lib\FlashMessage` antes de enviar a resposta JSON.
+    ```php
+    public function updateProfile(Request $request) {
+        // ... lógica de atualização no banco ...
+        
+        if ($deu_certo) {
+            \Lib\FlashMessage::success('Perfil atualizado com sucesso!');
+        } else {
+            \Lib\FlashMessage::danger('Erro ao salvar os dados.');
+        }
+
+        // Ao chamar o método json, as mensagens acima são anexadas automaticamente
+        $this->json(['status' => 'ok']);
+    }
+    ```
+
+2.  **O que acontece por trás:**
+    - O método `$this->json()` do backend busca mensagens pendentes no `FlashMessage::get()`.
+    - Ele envia um JSON assim para o Angular:
+      ```json
+      {
+        "status": "ok",
+        "flash": { "success": "Perfil atualizado com sucesso!" }
+      }
+      ```
+    - O **FlashInterceptor** no Angular percebe a chave `"flash"`, avisa o **FlashService**, e a mensagem aparece magicamente na interface do usuário sem você precisar escrever código extra no componente Angular.
