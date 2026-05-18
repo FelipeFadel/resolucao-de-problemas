@@ -1,0 +1,62 @@
+RELATÓRIO DE IMPLEMENTAÇÃO - MÉTODOS DE BUSCA E ORDENAÇÃO
+
+Este documento descreve a lógica, implementação e casos de uso de cada um dos exercícios desenvolvidos no projeto.
+
+-------------------------------------------------------------------------------
+EXERCÍCIO 01-02: TresValores
+- Lógica: Comparação direta entre três números inteiros.
+- Implementação: Métodos que verificam qual o maior, menor ou ordenam os três valores de forma manual.
+- Uso: Lógica básica de decisão e ordenação de pequena escala.
+
+-------------------------------------------------------------------------------
+EXERCÍCIO 03: Baralho (Ordenação Clássica)
+- Lógica: Implementação dos três pilares da ordenação básica:
+  1. Selection Sort: Busca o menor e coloca no início.
+  2. Bubble Sort: Flutua os maiores valores para o fim através de trocas adjacentes.
+  3. Insertion Sort: Insere cada elemento na sua posição correta em um sub-vetor já ordenado.
+- Implementação: Classe 'Baralho' que monitora o número de trocas e comparações.
+- Uso: Ordenação de arranjos médios onde a simplicidade de código é priorizada.
+
+-------------------------------------------------------------------------------
+EXERCÍCIO 04-06: MatrizDeInteiros (Gnome, Recursividade e Busca Otimizada)
+- Lógica:
+  1. Gnome Sort: Similar ao Insertion Sort, mas move o elemento para trás através de trocas sucessivas até encontrar o lugar correto.
+  2. Selection Sort Recursivo: Reduz o problema a cada chamada, encontrando o menor e chamando a função para o restante do vetor.
+  3. Busca por Extremidade Mais Próxima: Verifica se o alvo está entre o primeiro e o último elemento. Calcula se o alvo está mais perto do início ou do fim do vetor ordenado para decidir por onde começar a busca sequencial.
+- Uso: Demonstração de algoritmos menos convencionais e otimizações de busca linear.
+
+-------------------------------------------------------------------------------
+EXERCÍCIO: Mega Sena
+- Lógica: Conferência de acertos em um cartão de 6 a 20 números.
+- Implementação: Utiliza a Busca Binária (classe de apoio) para validar cada número sorteado contra o cartão do usuário de forma extremamente rápida.
+- Uso: Jogos de sorteio e validação de conjuntos de dados contra gabaritos.
+
+-------------------------------------------------------------------------------
+EXERCÍCIO: Find Unique Number
+- Lógica: Identificação de um único elemento discrepante em um mar de números iguais.
+- Implementação: Algoritmo O(n) que identifica o padrão majoritário nos 3 primeiros elementos e busca o intruso sem copiar o array original (otimizado para memória).
+- Uso: Detecção de anomalias em grandes volumes de dados uniformes.
+
+-------------------------------------------------------------------------------
+EXERCÍCIO 11: Enigma Sort (Bogo Sort)
+- Lógica: Ordenação por sorte. O algoritmo embaralha o vetor aleatoriamente e verifica se ele "caiu" ordenado. Se não, repete o processo.
+- Implementação: Loop 'do-while' com embaralhamento aleatório (shuffle).
+- Uso: Meramente didático para demonstrar a ineficiência extrema de algoritmos não determinísticos (Complexidade O(n * n!)).
+
+-------------------------------------------------------------------------------
+EXERCÍCIO 12: Bingo
+- Lógica: Geração de matriz 5x5 com 25 números únicos entre 1 e 50.
+- Implementação: Uso de 'Set' para garantir unicidade e 'toString' formatado com 'padStart' para alinhamento visual das colunas.
+- Uso: Geração de jogos e matrizes aleatórias formatadas.
+
+-------------------------------------------------------------------------------
+EXERCÍCIO 13: Análise de Pesquisa
+- Lógica: Comparação prática entre Busca Sequencial (O(n)) e Busca Binária (O(log n)).
+- Implementação: Script que cronometra o tempo de resposta em um array de 1 milhão de elementos.
+- Uso: Justificativa para o investimento de tempo em ordenar dados antes de realizar buscas frequentes.
+
+-------------------------------------------------------------------------------
+EXERCÍCIO 14: Análise Quantitativa de Busca Binária
+- Lógica: Cálculo do número máximo de comparações necessárias para diversos tamanhos de conjuntos (100 a 100.000).
+- Implementação: Uso de matrizes nativas e 'console.table' para exibir o ganho percentual de eficiência da Busca Binária sobre a Sequencial.
+- Uso: Planejamento de capacidade e performance de sistemas de busca em larga escala.
