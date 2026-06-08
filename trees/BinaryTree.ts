@@ -29,15 +29,36 @@ export default class BinaryTree {
     return this.raiz.getValue();
   }
 
-  public addSon(value: number): boolean {
+  public search(value: number): boolean {
+    if (value == this.getRaiz()) return true;
     if (value < this.getRaiz()) {
-      //add esquerda
-      this.left = new BinaryTree(value);
-    } else {
-      //add right
-      this.right = new BinaryTree(value);
+      if (this.left !== null) return this.left.search(value);
     }
-    return true;
+    if (value > this.getRaiz()) {
+      if (this.right !== null) return this.right.search(value);
+    }
+    return false;
+  }
+
+  public addSon(value: number): boolean {
+    const raiz = this.getRaiz();
+
+    if (raiz === value) return true; //Retorna verdadeiro pois ja foi adicionado
+    if (value < raiz) {
+      if (this.left === null) {
+        this.left = new BinaryTree(value);
+        return true;
+      } else {
+        return this.left.addSon(value);
+      }
+    } else {
+      if (this.right === null) {
+        this.right = new BinaryTree(value);
+        return true;
+      } else {
+        return this.right.addSon(value);
+      }
+    }
   }
 }
 
