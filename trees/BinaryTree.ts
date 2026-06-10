@@ -9,6 +9,7 @@ class Node {
     this.value = value;
     return this;
   }
+
   public getValue(): number {
     return this.value;
   }
@@ -40,6 +41,48 @@ export default class BinaryTree {
     return false;
   }
 
+  public getOrdem(tree: number[] = []): number[] {
+    if (this.left !== null) {
+      tree = this.left.getOrdem(tree);
+    }
+
+    tree.push(this.getRaiz());
+
+    if (this.right !== null) {
+      tree = this.right.getOrdem(tree);
+    }
+
+    return tree;
+  }
+
+  public getPreOrdem(tree: number[] = []): number[] {
+    tree.push(this.getRaiz());
+
+    if (this.left !== null) {
+      tree = this.left.getPreOrdem(tree);
+    }
+
+    if (this.right !== null) {
+      tree = this.right.getPreOrdem(tree);
+    }
+
+    return tree;
+  }
+
+  public getPosOrdem(tree: number[] = []): number[] {
+    if (this.left !== null) {
+      tree = this.left.getPosOrdem(tree);
+    }
+
+    if (this.right !== null) {
+      tree = this.right.getPosOrdem(tree);
+    }
+
+    tree.push(this.getRaiz());
+
+    return tree;
+  }
+
   public addSon(value: number): boolean {
     const raiz = this.getRaiz();
 
@@ -60,6 +103,28 @@ export default class BinaryTree {
       }
     }
   }
+
+  public remove(value: number): boolean {
+    if (value < this.getRaiz()) {
+      if (this.left !== null) {
+        console.log(this.getRaiz());
+        return this.left.search(value);
+      }
+    }
+    if (value > this.getRaiz()) {
+      {
+        if (this.right !== null) return this.right.search(value);
+      }
+    }
+    return false;
+
+    //Não tem filhos
+
+    //Tem um filho
+
+    //Tem dois filhos
+    return true;
+  }
 }
 
-//public left: Node | null = null,
+//public left: Node | null = null
