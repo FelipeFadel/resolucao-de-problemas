@@ -83,30 +83,64 @@ SET foreign_key_checks = 1;
 
 Para `movie_ratings`, `CASCADE` é o correto: uma avaliação não existe sem o usuário.
 
-### 3. Atenção: aplicar o schema recria o banco
+### 3. Aplicar e acessar o banco com os comandos do `./run`
 
-No nosso setup Docker, o schema roda na inicialização do container `db`. Para reaplicar:
+O projeto tem um script [`./run`](../../php/mymovies/run) que encapsula os comandos Docker. **Use ele** em vez de digitar `docker compose exec ...` na mão. Todos rodam a partir da raiz do backend (`cd ~/Tsi/php/mymovies`).
 
+**Garanta os containers de pé:**
 ```bash
-docker compose exec db mysql -u root mymovies < database/schema.sql
-# ou recriar o volume:
-docker compose down -v && docker compose up -d
+./run up -d        # sobe tudo em background
+./run ps           # confere que db, php, nginx estão "running"
 ```
+
+**Reaplicar o schema** (depois de editar `database/schema.sql`):
+```bash
+./run db:reset     # copia o schema.sql pro container e executa — recria as tabelas
+```
+> O `db:reset` faz exatamente o `DROP TABLE` + `CREATE TABLE` do seu arquivo. **Apaga todos os dados.** É o jeito de aplicar as novas Foreign Keys sem precisar destruir o volume.
+
+**Repopular com dados de teste** (cria o usuário `example@email.com`, etc.):
+```bash
+./run db:populate
+```
+
+**Abrir o console SQL interativo** (é aqui que você roda os SELECT/INSERT/DELETE da demonstração):
+```bash
+./run db:console
+```
+Isso abre o prompt do MariaDB já conectado no banco certo (`MariaDB [mymovies]>`). Para sair: `exit` ou `Ctrl+D`.
+
+> Sequência típica antes de demonstrar: `./run db:reset && ./run db:populate && ./run db:console`.
 
 ## Demonstração da integridade (roteiro para a banca)
 
+Depois de abrir o console com `./run db:console`, rode os comandos abaixo **dentro do prompt do MariaDB**:
+
 ```sql
--- 1. Cria usuário e rating
+-- 0. Confirmar que a FK existe de verdade
+SHOW CREATE TABLE movie_ratings\G
+-- procure a linha: CONSTRAINT `fk_ratings_user` FOREIGN KEY ... ON DELETE CASCADE
+
+-- 1. Pegar o id de um usuário existente e criar um rating pra ele
 SELECT id FROM users WHERE email = 'example@email.com';   -- ex.: 1
 INSERT INTO movie_ratings (user_id, movie_id, rating) VALUES (1, 550, 5);
+SELECT * FROM movie_ratings WHERE user_id = 1;            -- o rating está lá
 
 -- 2. CASCADE: deletar o usuário apaga o rating automaticamente
 DELETE FROM users WHERE id = 1;
-SELECT * FROM movie_ratings WHERE user_id = 1;   -- vazio! cascateou.
+SELECT * FROM movie_ratings WHERE user_id = 1;            -- vazio! cascateou.
 
 -- 3. Integridade: inserir rating para usuário inexistente FALHA
 INSERT INTO movie_ratings (user_id, movie_id, rating) VALUES (99999, 550, 5);
 -- ERROR 1452: Cannot add or update a child row: a foreign key constraint fails
+```
+
+> O `\G` no lugar do `;` mostra o resultado em formato vertical (mais legível para `SHOW CREATE TABLE`).
+
+**Verificar o engine** (lembrete do conceito InnoDB — sem ele, nada acima funciona):
+```sql
+SHOW TABLE STATUS WHERE Name = 'movie_ratings'\G
+-- coluna "Engine" deve mostrar: InnoDB
 ```
 
 ## Conceitos para o WIKI
