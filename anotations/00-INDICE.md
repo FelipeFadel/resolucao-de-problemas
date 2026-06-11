@@ -26,6 +26,57 @@ Abaixo, os 7 pedidos mais prováveis para a entrega 4.3, cada um com tutorial de
 - **03 → 05/07:** a galeria real usa `HasMany`, que já injeta o dono correto e isola arquivos por pasta.
 - **01 + 06:** ambos endurecem o `ProfileImages` (segurança + qualidade) e devem reusar uma única chamada de `getimagesize()`.
 
+## Como rodar a entrega (passo a passo)
+
+Todos os comandos `./run` rodam a partir da raiz do backend: `cd ~/Tsi/php/mymovies`.
+
+### 1. Subir o ambiente (backend + banco + nginx)
+```bash
+./run up -d        # sobe os containers em background
+./run ps           # confere: db, php, nginx devem estar "running"
+```
+
+### 2. Preparar o banco (aplica schema + dados de teste)
+```bash
+./run db:reset     # recria as tabelas a partir de database/schema.sql (aplica as FKs novas)
+./run db:populate  # cria os dados de teste (usuário example@email.com, etc.)
+```
+> ⚠️ `db:reset` faz `DROP TABLE` — apaga tudo. Sempre rode `db:populate` em seguida.
+
+### 3. Permissão da pasta de uploads (OBRIGATÓRIO para imagens funcionarem)
+A pasta `public/assets/uploads` é um **Docker volume** e o PHP roda como `www-data`. Sem isso, qualquer upload dá `mkdir(): Permission denied` (erro 500). Rode **uma vez** após subir os containers:
+```bash
+docker compose exec php chown -R www-data:www-data /var/www/public/assets/uploads
+```
+> Cobre também as subpastas novas da galeria (`uploads/users/{id}/`, `uploads/user_images/...`), pois o `-R` é recursivo. Não precisa repetir a cada upload — só se recriar o volume (`./run down -v`).
+
+### 4. Subir o frontend (Angular)
+Em outro terminal: `cd ~/Tsi/php/mymovies-angular`
+```bash
+npm install        # só na primeira vez
+npm start          # ou: ng serve  → abre em http://localhost:4200
+```
+> O `proxy.conf.json` redireciona `/api/*` para o backend em `localhost:3000`. Por isso o front e o back rodam juntos sem configurar CORS.
+
+### 5. Rodar os testes
+```bash
+./run test                 # todos os testes (unit + integração)
+./run test tests/Unit      # só unitários
+./run test:browser         # testes de aceitação (Selenium)
+./run phpstan              # análise estática
+./run phpcs                # estilo de código (PSR)
+```
+
+### Resumo rápido (do zero ao funcionando)
+```bash
+cd ~/Tsi/php/mymovies
+./run up -d
+./run db:reset && ./run db:populate
+docker compose exec php chown -R www-data:www-data /var/www/public/assets/uploads
+# em outro terminal:
+cd ~/Tsi/php/mymovies-angular && npm start
+```
+
 ## Referências bibliográficas usadas (consolidado)
 - ELMASRI; NAVATHE. *Sistemas de Banco de Dados* — FK, integridade referencial, ações ON DELETE.
 - DATE, C. J. *Introdução a Sistemas de Banco de Dados* — integridade referencial.
