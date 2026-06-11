@@ -181,6 +181,119 @@ Route::get('/gallery/images', [GalleryController::class, 'listImages']);
 Route::delete('/gallery/images/{id}', [GalleryController::class, 'deleteImage']);
 ```
 
+## Frontend (Angular) — a galeria na tela
+
+A galeria precisa de UI nova (não existe componente equivalente hoje). Vamos seguir os padrões já usados em [`edit-avatar`](../../php/mymovies-angular/src/app/components/edit-avatar/edit-avatar.ts) e [`profile.service.ts`](../../php/mymovies-angular/src/app/core/services/profile.service.ts).
+
+### 1. Métodos no service
+
+Em `core/services/profile.service.ts` (ou um `gallery.service.ts` novo):
+
+```typescript
+// Lista as imagens da galeria do usuário logado
+getGalleryImages() {
+  return this.http.get<{ images: { id: number; url: string }[] }>(
+    `${this.API_URL}/gallery/images`
+  ).pipe(catchError(handleError));
+}
+
+// Sobe uma imagem nova
+addGalleryImage(file: File) {
+  const formData = new FormData();
+  formData.append('image_file', file);            // mesmo nome que o backend lê em $_FILES
+  return this.http.post(`${this.API_URL}/gallery/images`, formData)
+    .pipe(catchError(handleError));
+}
+
+// Remove uma imagem específica por id
+deleteGalleryImage(id: number) {
+  return this.http.delete(`${this.API_URL}/gallery/images/${id}`)
+    .pipe(catchError(handleError));
+}
+
+// URL pública da imagem (mesmo padrão de getAvatarUrl)
+getGalleryUrl(path: string): string {
+  return `${this.API_URL}${path}`;
+}
+```
+
+### 2. Componente de galeria (lista 1×N + upload + remover)
+
+Crie `components/gallery/gallery.ts` seguindo o estilo signals do projeto:
+
+```typescript
+import { Component, inject, signal, OnInit } from '@angular/core';
+import { ProfileService } from '../../core/services/profile.service';
+
+@Component({
+  selector: 'app-gallery',
+  standalone: true,
+  templateUrl: './gallery.html',
+})
+export class Gallery implements OnInit {
+  private service = inject(ProfileService);
+  images = signal<{ id: number; url: string }[]>([]);
+  error = signal<string | null>(null);
+
+  ngOnInit() { this.load(); }
+
+  load() {
+    this.service.getGalleryImages().subscribe({
+      next: res => this.images.set(res.images),
+    });
+  }
+
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      this.service.addGalleryImage(input.files[0]).subscribe({
+        next: () => this.load(),                       // recarrega após subir
+        error: (err) => this.error.set(
+          err.errors?.['image_file']?.[0] ?? 'Erro no upload'
+        ),
+      });
+    }
+  }
+
+  remove(id: number) {
+    this.service.deleteGalleryImage(id).subscribe({
+      next: () => this.images.update(list => list.filter(i => i.id !== id)),
+    });
+  }
+}
+```
+
+### 3. Template `gallery.html` — o `@for` é o "1×N" na tela
+
+```html
+<div class="grid grid-cols-3 gap-3">
+  @for (img of images(); track img.id) {
+    <div class="relative group">
+      <img [src]="service.getGalleryUrl(img.url)" class="w-full h-40 object-cover rounded-lg" />
+      <button
+        (click)="remove(img.id)"
+        class="absolute top-1 right-1 bg-red-600 text-white rounded-full w-7 h-7 opacity-0 group-hover:opacity-100 transition"
+      >✕</button>
+    </div>
+  } @empty {
+    <p class="text-neutral-400 col-span-3">Nenhuma imagem na galeria ainda.</p>
+  }
+</div>
+
+<input type="file" #fileInput class="hidden" (change)="onFileSelected($event)" accept="image/*" />
+<button (click)="fileInput.click()" class="mt-4 bg-accent text-white px-4 py-2 rounded uppercase font-bold">
+  Adicionar imagem
+</button>
+
+@if (error()) { <span class="text-red-600 text-sm">{{ error() }}</span> }
+```
+
+> O `@for ... track img.id` renderiza **N** imagens a partir do array — é literalmente a relação 1×N aparecendo na interface. O `@empty` cobre o caso de galeria vazia. O `service` precisa ser `public` ou exposto para o template chamar `getGalleryUrl`.
+
+### 4. Plugar na página de perfil
+
+Em [`pages/profile/profile.ts`](../../php/mymovies-angular/src/app/pages/profile/profile.ts), adicione `Gallery` ao `imports`, e no `profile.html` insira `<app-gallery />` na seção desejada. O `auth-interceptor` cuida do token em todas as chamadas.
+
 ## Conceitos para o WIKI
 
 > **Relação 1:N (um-para-muitos):** associação em que uma instância da entidade A está vinculada a zero ou muitas instâncias da entidade B, enquanto cada B está vinculada a no máximo uma A. Implementada colocando a FK no lado "muitos" (N).

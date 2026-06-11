@@ -124,6 +124,10 @@ docker compose exec db mysql -u root mymovies -e \
   "SELECT * FROM movie_ratings WHERE user_id = 42;"
 ```
 
+## Frontend (Angular) — nada a mudar
+
+A exclusão de conta já é disparada pelo front (botão que chama `DELETE /account/delete` via service). A correção é 100% backend: o que muda é *o que acontece no servidor* após o clique. O fluxo de UI (confirmar senha → chamar API → `auth.logout()` → redirecionar) permanece igual.
+
 ## Conceito para o WIKI
 
 > **Consistência entre armazenamento transacional e não-transacional:** o banco de dados oferece transações ACID, mas o sistema de arquivos não participa dessas transações. Manter os dois consistentes exige que a aplicação orquestre as duas operações; padrões como executar a remoção de arquivos antes do commit, ou registrar arquivos órfãos para limpeza posterior, mitigam inconsistências.

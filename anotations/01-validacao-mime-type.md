@@ -140,6 +140,24 @@ public function test_should_reject_php_disguised_as_png(): void
 }
 ```
 
+## Frontend (Angular) — nada a mudar (já funciona)
+
+O componente [`edit-avatar.ts`](../../php/mymovies-angular/src/app/components/edit-avatar/edit-avatar.ts) já trata o erro retornado pelo backend:
+
+```typescript
+error: (err: ErrorsResponse) => {
+  if (err.errors && err.errors['avatar_file']) {
+    const errorData = err.errors['avatar_file'];
+    const errorMessage = Array.isArray(errorData) ? errorData[0] : errorData;
+    this.avatarError.set(errorMessage);   // exibe a mensagem na tela
+  }
+}
+```
+
+Como a nova validação de MIME devolve o erro na mesma estrutura (`errors['avatar_file']` / `errors['banner_file']`), **a mensagem aparece sozinha** na UI. Não precisa tocar no Angular.
+
+> **Opcional — feedback antecipado:** o `<input type="file" accept="image/*">` já filtra no seletor de arquivos do SO, mas isso é só conveniência visual — **não é segurança** (o usuário pode burlar). A validação que vale é a do backend (magic bytes). Nunca confie no `accept`.
+
 ## Conceito para o WIKI — MIME Type
 
 > **Definição:** MIME (Multipurpose Internet Mail Extensions) Type é um identificador padronizado de duas partes (`tipo/subtipo`, ex.: `image/png`) que descreve a natureza e o formato de um arquivo ou conteúdo transmitido. Originalmente criado para e-mail (RFC 2045/2046), foi adotado pela web para que cliente e servidor saibam interpretar o corpo de uma mensagem HTTP através do header `Content-Type`.

@@ -76,6 +76,65 @@ Route::delete('/change/banner', [ProfileController::class, 'deleteBanner']);
 
 > **Importante:** a rota fica dentro do grupo `auth` — só usuário autenticado pode remover o próprio banner. Isso conecta com o Pedido 7 (testes de acesso).
 
+## Frontend (Angular) — adicionar o botão de remover banner
+
+Hoje o front tem o modal `edit-banner` que **só faz upload**. Para remover, faltam duas coisas: um método no service e um botão na UI.
+
+### 1. Método no `profile.service.ts`
+
+Em [`src/app/core/services/profile.service.ts`](../../php/mymovies-angular/src/app/core/services/profile.service.ts), ao lado de `updateUserBanner()`, adicione:
+
+```typescript
+deleteUserBanner() {
+  return this.http.delete<{ token: string }>(`${this.API_URL}/change/banner`).pipe(
+    tap(response => {
+      if (response.token) {
+        this.auth.updateSession(response.token); // re-decodifica o JWT → banner volta ao default
+      }
+    }),
+    catchError(handleError),
+  );
+}
+```
+
+> Repare que reaproveitamos o mesmo padrão do upload: o backend devolve um **token novo** (com `banner_file` zerado), e `updateSession` faz a tela atualizar sozinha via signal. Não precisa recarregar a página.
+
+### 2. Botão no componente `edit-banner`
+
+Em [`src/app/components/edit-banner/edit-banner.ts`](../../php/mymovies-angular/src/app/components/edit-banner/edit-banner.ts), adicione o método:
+
+```typescript
+onDelete() {
+  this.service.deleteUserBanner().subscribe({
+    next: () => {
+      setTimeout(() => {
+        this.flashService.clear();
+        this.closeForm.emit();
+      }, 1000);
+    },
+    error: (err: ErrorsResponse) => {
+      this.bannerError.set('Não foi possível remover o banner.');
+    }
+  });
+}
+```
+
+### 3. Botão no template `edit-banner.html`
+
+No bloco de botões (onde já existem "Enviar" e "Cancelar"), adicione entre eles:
+
+```html
+<button
+    type="button"
+    (click)="onDelete()"
+    class="w-full bg-red-600 hover:brightness-110 text-white rounded-md uppercase font-bold tracking-wider py-2.5 transition-all duration-200 cursor-pointer"
+>
+    Remover Banner
+</button>
+```
+
+> O `auth-interceptor` já anexa o token automaticamente no `DELETE`, então não precisa fazer nada de auth aqui. O fluxo de feedback (flash + fechar modal) é idêntico ao do avatar — mantém a simetria que o professor valoriza.
+
 ## Teste de aceitação
 
 Seguindo [`tests/Acceptance/Profile/ProfileCest.php`](../../php/mymovies/tests/Acceptance/Profile/ProfileCest.php):

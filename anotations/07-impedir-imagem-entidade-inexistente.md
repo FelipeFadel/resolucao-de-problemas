@@ -124,6 +124,14 @@ public function test_exists_returns_false_for_unknown_user(): void
 }
 ```
 
+## Frontend (Angular) — nada a mudar (e por quê)
+
+Esse caso **nem deveria ser alcançável pela UI**: o front nunca manda o `id` do dono no corpo — o usuário vem do token (ver o padrão em [`profile.service.ts`](../../php/mymovies-angular/src/app/core/services/profile.service.ts), que só envia o `FormData` do arquivo). O `user_id` é derivado do JWT no backend.
+
+A defesa do Pedido 7 protege contra requisições **forjadas fora da UI** (Postman, curl, script malicioso). Se o backend devolver 404/422, o tratamento genérico de erro do Angular (`handleError` + os `error:` dos componentes) já exibe a mensagem. Sem mudança de tela.
+
+> Conexão importante: é justamente por o front **não** confiar no cliente para o `id` do dono que o ataque fica difícil pela UI — mas como a API é pública, a validação no backend + FK no banco são indispensáveis.
+
 ## Conceitos para o WIKI
 
 > **Violação de integridade referencial:** tentativa de inserir/atualizar uma FK com um valor que não existe na tabela referenciada. O SGBD com integridade referencial ativa rejeita a operação (no MySQL/InnoDB, erro 1452 / SQLSTATE 23000), preservando a consistência do banco.

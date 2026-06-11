@@ -119,6 +119,12 @@ public function test_should_reject_image_below_minimum_dimensions(): void
 
 > O teste de aspect ratio já existente usa o mesmo truque: passa um `min/max` impossível e espera a mensagem de erro. Mantemos o padrão.
 
+## Frontend (Angular) — nada a mudar (já funciona)
+
+Igual ao Pedido 1: os componentes `edit-avatar`/`edit-banner` já leem `err.errors['avatar_file' | 'banner_file']` e exibem a mensagem. Como `validateMinDimensions()` adiciona o erro na mesma coluna, a mensagem "no mínimo NxN pixels" aparece automaticamente na tela. Sem mudança no Angular.
+
+> **Opcional — pré-checagem no navegador:** dá para validar as dimensões antes de enviar, lendo o arquivo no front (`new Image()` + `URL.createObjectURL`). Isso melhora a UX (erro instantâneo, sem round-trip), mas é só conveniência — a validação obrigatória continua sendo a do backend.
+
 ## Conceito para o WIKI
 
 > **Resolução vs. proporção:** a *proporção* (aspect ratio) descreve a relação largura/altura e é independente da escala; a *resolução* (dimensões em pixels) descreve a quantidade de informação da imagem. Duas validações ortogonais: uma garante o formato, a outra garante qualidade/densidade suficiente. Em imagens raster (bitmap), ampliar além da resolução nativa causa perda de qualidade (pixelização), pois não há informação adicional para interpolar.
