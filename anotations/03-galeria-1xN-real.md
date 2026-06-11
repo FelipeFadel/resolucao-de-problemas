@@ -19,9 +19,11 @@ users (1) ────< (N) user_images
 
 ### 1. Tabela nova no schema
 
-Em [`database/schema.sql`](../../php/mymovies/database/schema.sql):
+Em [`database/schema.sql`](../../php/mymovies/database/schema.sql). **Atenção:** inclua o `DROP TABLE IF EXISTS` junto do `CREATE` — não só o `CREATE`:
 
 ```sql
+DROP TABLE IF EXISTS user_images;
+
 CREATE TABLE `user_images` (
     `id` INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
     `user_id` INTEGER UNSIGNED NOT NULL,
@@ -36,7 +38,24 @@ CREATE TABLE `user_images` (
 
 > `ON DELETE CASCADE` garante que deletar o usuário apaga os **registros** das imagens no banco. A remoção dos **arquivos** do filesystem é responsabilidade da aplicação (ver Pedido 5).
 
-> ✅ **Você já fez isto** — a tabela `user_images` já está no seu `schema.sql` com a FK. Falta rodar `./run db:reset` para aplicá-la (ver passo final).
+#### ⚠️ Por que o `DROP TABLE IF EXISTS` é obrigatório (erro 1050)
+
+Todas as tabelas do schema têm o par `DROP TABLE IF EXISTS` + `CREATE TABLE`. Isso torna o schema **idempotente**: pode rodar quantas vezes quiser que o resultado é o mesmo (apaga se existir, recria do zero). Se você esquecer o `DROP`, o schema só funciona na primeira execução.
+
+O detalhe que torna isso crítico no nosso projeto: **o schema roda duas vezes** no fluxo `./run db:reset && ./run db:populate`:
+
+1. `db:reset` → aplica o `schema.sql` direto no banco.
+2. `db:populate` → chama `Database::migrate()`, que aplica o `schema.sql` **de novo** antes de inserir os dados.
+
+Na segunda passada, o `DROP IF EXISTS` das outras tabelas limpa elas antes de recriar. Mas uma tabela **só com `CREATE`** bate de frente com a versão já existente e estoura:
+
+```
+SQLSTATE[42S01]: Base table or view already exists: 1050 Table 'user_images' already exists
+```
+
+> **Sobre a ordem do DROP e a FK:** o `user_images` é tabela "filha" (tem FK para `users`). Em tese, dropar a pai antes da filha violaria a FK. Mas o schema inteiro está envolto em `SET foreign_key_checks = 0;` (primeira linha) ... `SET foreign_key_checks = 1;` (última linha), que **desliga a checagem** durante o processo. Por isso a ordem dos DROPs não importa aqui — pode deixar o `DROP user_images` logo antes do seu `CREATE`.
+
+> ✅ **No seu caso já está resolvido** — adicionamos o `DROP TABLE IF EXISTS user_images;` no schema. Se aparecer o erro 1050, é sinal de que esse `DROP` está faltando.
 
 ---
 
@@ -96,6 +115,7 @@ namespace App\Models;
 
 use Core\Database\ActiveRecord\Model;
 use Core\Database\ActiveRecord\BelongsTo;
+use App\Services\ProfileImages;
 use Lib\Validations;
 
 /**
@@ -128,8 +148,17 @@ class UserImage extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+
+    // Devolve o CAMINHO PÚBLICO da imagem (/assets/uploads/user_images/{id}/arquivo?hash),
+    // não só o nome do arquivo. Reusa o path() do ProfileImages, igual User::getAvatarPath().
+    public function path(): string
+    {
+        return (new ProfileImages($this, [], 'image_file'))->path();
+    }
 }
 ```
+
+> **Por que o `path()`?** A coluna `image_file` guarda só o **nome** do arquivo (ex.: `acd7b450e25d02b5.jpg`). O front precisa da **URL pública completa** (`/assets/uploads/user_images/{id}/acd7b450e25d02b5.jpg`). O `ProfileImages::path()` já monta isso (com hash de cache-busting). Se o controller devolver `image_file` cru, o Angular monta `/api` + `acd7b450e25d02b5.jpg` = `/apiacd7b450e25d02b5.jpg` → **404**. É o mesmo motivo de o `User` ter `getAvatarPath()` em vez de expor `avatar_file` direto.
 
 ---
 
@@ -346,7 +375,7 @@ class GalleryController extends Controller
 
         $this->json([
             'images' => array_map(
-                fn($img) => ['id' => $img->id, 'url' => $img->image_file],
+                fn($img) => ['id' => $img->id, 'url' => $img->path()],
                 $user->gallery()->all()
             ),
         ]);
@@ -414,6 +443,23 @@ curl -H "Authorization: Bearer <TOKEN>" http://localhost:3000/gallery/images
 curl -X POST -H "Authorization: Bearer <TOKEN>" \
      -F "image_file=@/caminho/para/foto.png" http://localhost:3000/gallery/images
 ```
+
+### 9. Troubleshooting — erros reais que aparecem nesta implementação
+
+Erros que de fato aconteceram ao montar a galeria, com causa e correção:
+
+| Erro | Onde aparece | Causa | Correção |
+|------|--------------|-------|----------|
+| `Table 'user_images' doesn't exist` (SQLSTATE 42S02 / 1146) | resposta 500 ao chamar `/gallery/images` | a tabela está no `schema.sql` mas **não foi aplicada** no banco em execução | `./run db:reset && ./run db:populate` |
+| `Table 'user_images' already exists` (SQLSTATE 42S01 / 1050) | durante o `./run db:populate` | falta `DROP TABLE IF EXISTS user_images;` no schema — ele roda 2× (reset + migrate) e não é idempotente | adicionar o `DROP` (ver seção 1) |
+| `mkdir(): Permission denied` | resposta 500 ao subir imagem | a pasta de uploads (Docker volume) não pertence ao `www-data` | `docker compose exec php chown -R www-data:www-data /var/www/public/assets/uploads` |
+| `'app-gallery' is not a known element` (NG8001) | build do Angular | o componente `Gallery` não está no array `imports` do componente que usa `<app-gallery>` | adicionar `Gallery` ao `imports: [...]` (não basta o `import` do topo) |
+| `Property 'service' is private` (TS2341) | build do Angular | o template chama `service.x()` mas o campo é `private` | trocar `private service` por `protected service` |
+| `class "App\Models\UserImage" not found` | resposta 500 | o `User::images()` referencia `UserImage` mas o arquivo do model não foi criado | criar `app/Models/UserImage.php` (seção 2) |
+| `GET /apiacd7b...jpg 404` (URL grudada) | imagem da galeria não carrega na tela | o controller devolveu `image_file` (só o nome) em vez do caminho público; o front colou `/api` + nome | devolver `$img->path()` no `listImages` (ver seção 2 e 6) |
+| `/auth/login 401` após resetar o banco | login falha | o `db:reset` apagou os usuários; você precisa logar com os dados recriados pelo `db:populate` | logar com `example@email.com` / `password123` (ou o que o populate define) |
+
+> **Regra geral:** sempre que mexer na **estrutura** do banco (nova tabela/coluna/FK), reaplique com `./run db:reset` — editar o `schema.sql` não muda o banco que já está rodando. E toda tabela nova precisa do par `DROP TABLE IF EXISTS` + `CREATE TABLE` para o schema continuar idempotente.
 
 ## Frontend (Angular) — a galeria na tela
 
